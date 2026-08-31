@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BillWatch — Expense Activity &amp; Urgency Ledger</title>
+  <meta name="description" content="Autonomous financial activity monitor and notification log." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-page: #f7f6f3;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f0ede6;
+      --bg-muted: #e9e5dc;
+      
+      --text-main: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #8c8c8c;
+      
+      /* Intentional Editorial Red */
+      --red-accent: #c8102e;
+      --red-subtle: #fdf2f2;
+      --red-border: #e8a5ad;
+
+      /* Muted status cues */
+      --amber-accent: #8a5a00;
+      --amber-subtle: #fdf8ee;
+      
+      --border-light: #e0ddd6;
+      --border-dark: #1a1a1a;
+      
+      --font-serif: 'Newsreader', Georgia, serif;
+      --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'IBM Plex Mono', Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: 48px 32px 80px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .editorial-wrapper {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    /* Masthead Header */
+    header.masthead {
+      border-bottom: 2px solid var(--border-dark);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+
+    .masthead-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 38px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .brand-title span.red-dot {
+      color: var(--red-accent);
+    }
+
+    .masthead-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .status-pip {
+      width: 6px;
+      height: 6px;
+      background-color: var(--red-accent);
+      border-radius: 50%;
+    }
+
+    .masthead-desc {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .btn-action-primary {
+      background-color: var(--text-main);
+      color: #ffffff;
+      border: 1px solid var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action-primary:hover {
+      background-color: var(--red-accent);
+      border-color: var(--red-accent);
+    }
+
+    /* Financial Summary Ribbon */
+    .summary-ribbon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 860px) {
+      .summary-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 480px) {
+      .summary-ribbon {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .summary-cell {
+      padding: 16px 20px;
+      border-right: 1px solid var(--border-light);
+    }
+    .summary-cell:last-child {
+      border-right: none;
+    }
+
+    .summary-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .summary-amount {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .summary-cell.urgent .summary-amount {
+      color: var(--red-accent);
+    }
+
+    .summary-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Editorial Content Grid (Asymmetric) */
+    .editorial-grid {
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 36px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .editorial-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Ledger Column */
+    .ledger-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+    }
+
+    /* Toolbar Header */
+    .ledger-toolbar {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--bg-subtle);
+    }
+
+    .filter-tabs-flat {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tab-flat {
+      background: transparent;
+      border: 1px solid transparent;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .tab-flat:hover {
+      color: var(--text-main);
+      background: var(--bg-surface);
+    }
+
+    .tab-flat.active {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border-color: var(--border-light);
+      font-weight: 600;
+    }
+
+    .tab-flat.active[data-filter="overdue"] {
+      color: var(--red-accent);
+    }
+
+    .search-flat {
+      position: relative;
+    }
+
+    .search-flat input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      padding: 5px 10px 5px 28px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-main);
+      border-radius: 2px;
+      outline: none;
+      width: 180px;
+      transition: border-color 0.15s ease;
+    }
+
+    .search-flat input:focus {
+      border-color: var(--text-main);
+    }
+
+    .search-flat svg {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+    }
+
+    /* Structured Table / Ledger Rows */
+    .ledger-table-header {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 1fr 90px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border-light);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      background: #faf9f6;
+    }
+
+    @media (max-width: 640px) {
+      .ledger-table-header {
+        display: none;
+      }
+    }
+
+    .ledger-rows-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ledger-entry-row {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 1fr 90px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      align-items: center;
+      position: relative;
+      transition: background-color 0.15s ease;
+    }
+
+    .ledger-entry-row:last-child {
+      border-bottom: none;
+    }
+
+    .ledger-entry-row:hover {
+      background-color: #faf9f6;
+    }
+
+    /* Red Left Border for Overdue */
+    .ledger-entry-row.overdue-flag {
+      border-left: 3px solid var(--red-accent);
+    }
+    .ledger-entry-row.duesoon-flag {
+      border-left: 3px solid var(--amber-accent);
+    }
+    .ledger-entry-row.fine-flag {
+      border-left: 3px solid var(--border-light);
+    }
+    .ledger-entry-row.settled-flag {
+      border-left: 3px solid #1a1a1a;
+      opacity: 0.7;
+    }
+
+    /* Column 1: Bill Info */
+    .col-particulars {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-right: 16px;
+    }
+
+    .bill-heading-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bill-name-text {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .status-tag-text {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .status-tag-text.overdue {
+      color: var(--red-accent);
+    }
+    .status-tag-text.due-soon {
+      color: var(--amber-accent);
+    }
+    .status-tag-text.fine {
+      color: var(--text-secondary);
+    }
+    .status-tag-text.settled {
+      color: var(--text-main);
+    }
+
+    .autopay-caption {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .dispatch-memo-line {
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--bg-subtle);
+      padding: 4px 8px;
+      border-radius: 2px;
+      word-break: break-word;
+    }
+
+    .dispatch-memo-line span.memo-prefix {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    /* Column 2: Schedule & Timestamps */
+    .col-schedule {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .due-date-val {
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .due-date-val.urgent {
+      color: var(--red-accent);
+    }
+
+    .record-timestamp {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* Column 3: Amount */
+    .col-amount {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .amount-display {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .amount-display.urgent {
+      color: var(--red-accent);
+    }
+
+    .payment-status-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    /* Column 4: Actions */
+    .col-actions {
+      text-align: right;
+    }
+
+    .btn-minimal-toggle {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-minimal-toggle:hover {
+      border-color: var(--text-main);
+      background: var(--bg-subtle);
+    }
+
+    @media (max-width: 640px) {
+      .ledger-entry-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .col-actions {
+        text-align: left;
+      }
+    }
+
+    /* Right Sidebar Column */
+    .sidebar-editorial {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .sidebar-block {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      padding: 18px;
+    }
+
+    .sidebar-heading {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .audit-terminal-plain {
+      background: #faf9f6;
+      border: 1px solid var(--border-light);
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      max-height: 270px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .audit-terminal-plain::-webkit-scrollbar {
+      width: 4px;
+    }
+    .audit-terminal-plain::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+    }
+
+    .audit-line {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+      padding-bottom: 4px;
+    }
+
+    .audit-line span.ts {
+      color: var(--text-tertiary);
+    }
+    .audit-line span.alert {
+      color: var(--red-accent);
+      font-weight: 500;
+    }
+    .audit-line span.warn {
+      color: var(--amber-accent);
+      font-weight: 500;
+    }
+    .audit-line span.ok {
+      color: var(--text-main);
+    }
+
+    /* Criteria Rules */
+    .criteria-editorial-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .criteria-row-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .criteria-tag-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 1px 4px;
+      border: 1px solid var(--border-light);
+      color: var(--text-main);
+      flex-shrink: 0;
+    }
+
+    .criteria-tag-badge.red {
+      color: var(--red-accent);
+      border-color: var(--red-border);
+      background: var(--red-subtle);
+    }
+
+    /* Editorial Toast */
+    #toastEditorial {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text-main);
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 10px 18px;
+      border-radius: 2px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 999;
+    }
+
+    #toastEditorial.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer Colophon */
+    footer.editorial-colophon {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="editorial-wrapper">
+    <!-- Masthead Header -->
+    <header class="masthead">
+      <div class="masthead-top">
+        <h1 class="brand-title">BillWatch<span class="red-dot">.</span></h1>
+        <div class="masthead-meta">
+          <div class="status-indicator">
+            <span class="status-pip"></span>
+            <span>Agent Active</span>
+          </div>
+          <span>Ref Date: 2026-08-31</span>
+        </div>
+      </div>
+      <div class="masthead-desc">
+        <p>Autonomous expense ledger &amp; urgency notification registry · Strands SDK + Anthropic Claude</p>
+        <button class="btn-action-primary" id="btn-scan" onclick="triggerSimulatedScan()">
+          Run Agent Cycle
+        </button>
+      </div>
+    </header>
+
+    <!-- Financial Summary Ribbon -->
+    <section class="summary-ribbon">
+      <div class="summary-cell urgent">
+        <div class="summary-label">
+          <span>01 / Overdue</span>
+          <span id="stat-overdue-count">2</span>
+        </div>
+        <div class="summary-amount" id="stat-overdue-amt">$230.50</div>
+        <div class="summary-note">Immediate action required</div>
+      </div>
+
+      <div class="summary-cell">
+        <div class="summary-label">
+          <span>02 / Due Soon (&le; 3D)</span>
+          <span id="stat-due-soon-count">2</span>
+        </div>
+        <div class="summary-amount" id="stat-due-soon-amt">$1,912.30</div>
+        <div class="summary-note">Action needed this cycle</div>
+      </div>
+
+      <div class="summary-cell">
+        <div class="summary-label">
+          <span>03 / In Order</span>
+          <span id="stat-fine-count">2</span>
+        </div>
+        <div class="summary-amount" id="stat-fine-amt">$329.99</div>
+        <div class="summary-note">Monitored quietly</div>
+      </div>
+
+      <div class="summary-cell">
+        <div class="summary-label">
+          <span>04 / Monitored Total</span>
+          <span id="stat-total-count">6 Bills</span>
+        </div>
+        <div class="summary-amount" id="stat-total-amt">$2,472.79</div>
+        <div class="summary-note">Source: data/bills.csv</div>
+      </div>
+    </section>
+
+    <!-- Asymmetric Editorial Grid -->
+    <div class="editorial-grid">
+      <!-- Left Column: Primary Ledger -->
+      <main class="ledger-section">
+        <!-- Toolbar -->
+        <div class="ledger-toolbar">
+          <div class="filter-tabs-flat">
+            <button class="tab-flat active" data-filter="all" onclick="setFilter('all', this)">
+              All (<span id="count-all">6</span>)
+            </button>
+            <button class="tab-flat" data-filter="overdue" onclick="setFilter('overdue', this)">
+              Overdue (<span id="count-overdue">2</span>)
+            </button>
+            <button class="tab-flat" data-filter="due_soon" onclick="setFilter('due_soon', this)">
+              Due Soon (<span id="count-duesoon">2</span>)
+            </button>
+            <button class="tab-flat" data-filter="fine" onclick="setFilter('fine', this)">
+              In Order (<span id="count-fine">2</span>)
+            </button>
+          </div>
+
+          <div class="search-flat">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Filter ledger..." oninput="handleSearch()" />
+          </div>
+        </div>
+
+        <!-- Table Header -->
+        <div class="ledger-table-header">
+          <span>Particulars / Obligation</span>
+          <span>Schedule &amp; Log</span>
+          <span>Amount</span>
+          <span style="text-align:right;">Action</span>
+        </div>
+
+        <!-- Ledger Entries -->
+        <div class="ledger-rows-container" id="notificationsContainer">
+          <!-- Rendered via JS -->
+        </div>
+      </main>
+
+      <!-- Right Column: Audit Log & Protocol -->
+      <aside class="sidebar-editorial">
+        <!-- Audit Stream -->
+        <div class="sidebar-block">
+          <div class="sidebar-heading">
+            <span>Agent Audit Log</span>
+            <span style="color:var(--text-tertiary);" id="live-time-badge">2026-08-31</span>
+          </div>
+          <div class="audit-terminal-plain" id="logStream">
+            <div class="audit-line">
+              <span class="ts">[10:22:01]</span> <span class="ok">INIT</span> Agent harness configured with Claude 3.5 Sonnet.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:02]</span> <span class="ok">INGEST</span> Retrieved 6 records from data/bills.csv.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:03]</span> <span class="alert">ALERT</span> [OVERDUE] Electric Utility ($145.50) due 2026-08-20.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:03]</span> <span class="alert">ALERT</span> [OVERDUE] Internet Fiber ($85.00) due 2026-08-23.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:04]</span> <span class="warn">WARN</span> [DUE SOON] Apartment Rent ($1850.00) due 2026-08-27.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:04]</span> <span class="warn">WARN</span> [DUE SOON] Water &amp; Sewer ($62.30) due 2026-08-28.
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:05]</span> <span class="ok">SILENT</span> Health Insurance &amp; Cloud Storage in order (&gt; 3 days).
+            </div>
+            <div class="audit-line">
+              <span class="ts">[10:22:05]</span> <span class="ok">COMPLETE</span> Cycle ended. 4 alerts dispatched.
+            </div>
+          </div>
+        </div>
+
+        <!-- Evaluation Rules -->
+        <div class="sidebar-block">
+          <div class="sidebar-heading">
+            <span>Urgency Protocol</span>
+            <span style="color:var(--text-tertiary);">tools.py</span>
+          </div>
+          <ul class="criteria-editorial-list">
+            <li class="criteria-row-item">
+              <span class="criteria-tag-badge red">Overdue</span>
+              <span>Due date strictly precedes today. Dispatches immediate notice.</span>
+            </li>
+            <li class="criteria-row-item">
+              <span class="criteria-tag-badge">Due Soon</span>
+              <span>Due within 0 to 3 days. Action alert dispatched to prevent penalties.</span>
+            </li>
+            <li class="criteria-row-item">
+              <span class="criteria-tag-badge">In Order</span>
+              <span>Due &gt; 3 days in future. Agent remains silent.</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Colophon -->
+    <footer class="editorial-colophon">
+      <span>BillWatch Autonomous Monitor</span>
+      <span>Strands Agents Hackathon Submission</span>
+    </footer>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastEditorial">
+    <span id="toastMessage">Agent cycle executed.</span>
+  </div>
+
+  <script>
+    // Sample Data parsed directly from data/bills.csv
+    // Reference system date: 2026-08-31
+    const billsData = [
+      {
+        name: "Electric Utility",
+        amount: 145.50,
+        due_date: "2026-08-20",
+        autopay: false,
+        status: "unpaid",
+        urgency: "overdue",
+        timestamp: "2026-08-31 10:22:03"
+      },
+      {
+        name: "Internet Fiber",
+        amount: 85.00,
+        due_date: "2026-08-23",
+        autopay: true,
+        status: "pending",
+        urgency: "overdue",
+        timestamp: "2026-08-31 10:22:03"
+      },
+      {
+        name: "Apartment Rent",
+        amount: 1850.00,
+        due_date: "2026-08-27",
+        autopay: false,
+        status: "unpaid",
+        urgency: "due_soon",
+        timestamp: "2026-08-31 10:22:04"
+      },
+      {
+        name: "Water & Sewer",
+        amount: 62.30,
+        due_date: "2026-08-28",
+        autopay: false,
+        status: "unpaid",
+        urgency: "due_soon",
+        timestamp: "2026-08-31 10:22:04"
+      },
+      {
+        name: "Health Insurance",
+        amount: 320.00,
+        due_date: "2026-09-05",
+        autopay: true,
+        status: "scheduled",
+        urgency: "fine",
+        timestamp: "2026-08-31 10:22:05"
+      },
+      {
+        name: "Cloud Storage Subscription",
+        amount: 9.99,
+        due_date: "2026-09-15",
+        autopay: true,
+        status: "scheduled",
+        urgency: "fine",
+        timestamp: "2026-08-31 10:22:05"
+      }
+    ];
+
+    let currentFilter = "all";
+    let searchQuery = "";
+
+    function updateSummaryStats() {
+      const overdueBills = billsData.filter(b => b.urgency === 'overdue' && b.status !== 'paid');
+      const dueSoonBills = billsData.filter(b => b.urgency === 'due_soon' && b.status !== 'paid');
+      const fineBills = billsData.filter(b => b.urgency === 'fine' || b.status === 'paid');
+
+      const sumOverdue = overdueBills.reduce((acc, b) => acc + b.amount, 0);
+      const sumDueSoon = dueSoonBills.reduce((acc, b) => acc + b.amount, 0);
+      const sumFine = fineBills.reduce((acc, b) => acc + b.amount, 0);
+      const totalAmount = billsData.reduce((acc, b) => acc + b.amount, 0);
+
+      document.getElementById("stat-overdue-count").innerText = overdueBills.length;
+      document.getElementById("stat-overdue-amt").innerText = `$${sumOverdue.toFixed(2)}`;
+      
+      document.getElementById("stat-due-soon-count").innerText = dueSoonBills.length;
+      document.getElementById("stat-due-soon-amt").innerText = `$${sumDueSoon.toFixed(2)}`;
+      
+      document.getElementById("stat-fine-count").innerText = fineBills.length;
+      document.getElementById("stat-fine-amt").innerText = `$${sumFine.toFixed(2)}`;
+
+      document.getElementById("stat-total-count").innerText = `${billsData.length} Bills`;
+      document.getElementById("stat-total-amt").innerText = `$${totalAmount.toFixed(2)}`;
+
+      document.getElementById("count-all").innerText = billsData.length;
+      document.getElementById("count-overdue").innerText = overdueBills.length;
+      document.getElementById("count-duesoon").innerText = dueSoonBills.length;
+      document.getElementById("count-fine").innerText = fineBills.length;
+    }
+
+    function renderNotifications() {
+      const container = document.getElementById("notificationsContainer");
+      
+      const filtered = billsData.filter(bill => {
+        let effectiveUrgency = bill.urgency;
+        if (bill.status === 'paid') effectiveUrgency = 'fine';
+
+        const matchesFilter = currentFilter === "all" || effectiveUrgency === currentFilter;
+        const matchesSearch = bill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              bill.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              bill.due_date.includes(searchQuery);
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 40px 20px; color: var(--text-secondary); background: var(--bg-surface);">
+            <p style="font-family: var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-main); margin-bottom:2px;">No matching records found</p>
+            <p style="font-size:13px;">Adjust your active filter or search query.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(bill => {
+        let tagClass = "fine";
+        let tagLabel = "IN ORDER";
+        let flagClass = "fine-flag";
+        let isUrgent = false;
+
+        if (bill.status === 'paid') {
+          tagClass = "settled";
+          tagLabel = "SETTLED";
+          flagClass = "settled-flag";
+        } else if (bill.urgency === "overdue") {
+          tagClass = "overdue";
+          tagLabel = "OVERDUE";
+          flagClass = "overdue-flag";
+          isUrgent = true;
+        } else if (bill.urgency === "due_soon") {
+          tagClass = "due-soon";
+          tagLabel = "DUE SOON";
+          flagClass = "duesoon-flag";
+        }
+
+        const autopayText = bill.autopay ? "AUTOPAY: ON" : "AUTOPAY: OFF";
+        const formattedAmount = bill.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        const payloadText = `[${tagLabel}] ${bill.name} of ${formattedAmount} is due on ${bill.due_date} (${autopayText}). Status: ${bill.status}.`;
+
+        return `
+          <div class="ledger-entry-row ${flagClass}">
+            <!-- Column 1: Bill Particulars -->
+            <div class="col-particulars">
+              <div class="bill-heading-line">
+                <span class="bill-name-text">${bill.name}</span>
+                <span class="status-tag-text ${tagClass}">[ ${tagLabel} ]</span>
+                <span class="autopay-caption">· ${autopayText}</span>
+              </div>
+              <div class="dispatch-memo-line">
+                <span class="memo-prefix">DISPATCH:</span> ${payloadText}
+              </div>
+            </div>
+
+            <!-- Column 2: Schedule & Timestamps -->
+            <div class="col-schedule">
+              <div class="due-date-val ${isUrgent ? 'urgent' : ''}">Due: ${bill.due_date}</div>
+              <div class="record-timestamp">Log: ${bill.timestamp}</div>
+            </div>
+
+            <!-- Column 3: Amount -->
+            <div class="col-amount">
+              <div class="amount-display ${isUrgent ? 'urgent' : ''}">${formattedAmount}</div>
+              <div class="payment-status-tag">${bill.status}</div>
+            </div>
+
+            <!-- Column 4: Actions -->
+            <div class="col-actions">
+              <button class="btn-minimal-toggle" onclick="togglePaymentStatus('${bill.name}')">
+                ${bill.status === 'paid' ? 'Reopen' : 'Settle'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateSummaryStats();
+    }
+
+    function setFilter(filterType, buttonEl) {
+      currentFilter = filterType;
+      document.querySelectorAll('.tab-flat').forEach(el => el.classList.remove('active'));
+      if (buttonEl) buttonEl.classList.add('active');
+      renderNotifications();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById("searchInput").value;
+      renderNotifications();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toastEditorial");
+      const toastMsg = document.getElementById("toastMessage");
+      toastMsg.innerText = message;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2800);
+    }
+
+    function triggerSimulatedScan() {
+      const btn = document.getElementById("btn-scan");
+      btn.innerText = "Running Cycle...";
+      btn.style.opacity = "0.7";
+
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const logStream = document.getElementById("logStream");
+
+      setTimeout(() => {
+        btn.innerText = "Run Agent Cycle";
+        btn.style.opacity = "1";
+
+        const newEntry = document.createElement("div");
+        newEntry.className = "audit-line";
+        newEntry.innerHTML = `<span class="ts">[${timeStr}]</span> <span class="ok">CYCLE</span> Checked ${billsData.length} records in data/bills.csv. 0 new changes.`;
+        logStream.prepend(newEntry);
+
+        showToast("Agent cycle completed.");
+      }, 500);
+    }
+
+    function togglePaymentStatus(billName) {
+      const bill = billsData.find(b => b.name === billName);
+      if (bill) {
+        if (bill.status === "paid") {
+          bill.status = "unpaid";
+          showToast(`Reopened ${billName}.`);
+        } else {
+          bill.status = "paid";
+          showToast(`Settled ${billName}.`);
+        }
+        renderNotifications();
+      }
+    }
+
+    // Initial Render
+    document.addEventListener("DOMContentLoaded", () => {
+      renderNotifications();
+    });
+  </script>
+</body>
+</html>

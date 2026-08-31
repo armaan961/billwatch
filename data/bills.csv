@@ -1,0 +1,7 @@
+name,amount,due_date,autopay,status
+Electric Utility,145.50,2026-08-20,False,unpaid
+Internet Fiber,85.00,2026-08-23,True,pending
+Apartment Rent,1850.00,2026-08-27,False,unpaid
+Water & Sewer,62.30,2026-08-28,False,unpaid
+Health Insurance,320.00,2026-09-05,True,scheduled
+Cloud Storage Subscription,9.99,2026-09-15,True,scheduled
